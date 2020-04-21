@@ -9,7 +9,9 @@ const user = require("./server/routes/users");
 const issue = require("./server/routes/issues");
 const attachment = require("./server/routes/attachments");
 const comment = require("./server/routes/comments");
-
+const connectSocket = require('./server/libs//socketLib');
+const winLogger = require("./server/libs/winstonLib");
+const error = require('./server/middleware/error');
 
 const app = express();
 
@@ -22,17 +24,19 @@ app.use("/user",user);
 app.use("/issue",issue);
 app.use("/attachment",attachment);
 app.use("/comment",comment);
+app.use(error);
 
 
 
 mongoose.connect(config.get("mongodbUrl"),{useNewUrlParser:true,useCreateIndex:true,useUnifiedTopology:true})
-    .then(()=>{console.log("db connected Successfully")})
+    .then(()=>{winLogger.info("Connected To DB")})
     .catch((err)=>{console.log(err)});
 
 const server = http.createServer(app);
 
 server.listen(config.get("port"),()=>{
-    console.log("listening on 3000");
-    
+    winLogger.info("Express Server started at port "+config.get("port"));
+    connectSocket(server);
 });
+
 

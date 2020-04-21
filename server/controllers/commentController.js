@@ -1,6 +1,7 @@
 const {Comment} = require('../models/comment');
 const { User } = require('../models/user');
 const { generateResponse } = require('../libs/responseLib');
+const winstonLogger = require('../libs/winstonLib');
 
 const isEmpty = require('../libs/checkLib');
 
@@ -9,6 +10,7 @@ async function addComment(req,res){
     const user = await User.findOne({userId : req.body.userId}).select("name");
     
     if(isEmpty(user)){
+        winstonLogger.error("user not found")
         return res.send(generateResponse(404,true,"User not Found",null));
     }
     
@@ -23,7 +25,7 @@ async function addComment(req,res){
         });
 
         comment = await comment.save();
-        
+        winstonLogger.info("Comment added Successfully");
         comment.toObject();
         return res.send(generateResponse(200,null,"Comment Added Successfully",comment));
     
@@ -34,6 +36,7 @@ async function getComment(req,res){
                         .sort({createdOn : -1});
 
     if(isEmpty(comments)){
+        
         return res.send(generateResponse(404,true,"Comment not available for given issue",null));
     }
     

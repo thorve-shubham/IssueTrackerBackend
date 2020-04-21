@@ -8,9 +8,9 @@ const winLogger = require('../libs/winstonLib');
 async function reportIssue(req,res){
 
     const assign = await User.findOne({userId : req.body.assignedTo}).select('userId name');
-    console.log(assign);
+    
     const report = await User.findOne({userId : req.body.reporter}).select('userId name');
-    console.log(report);
+    
     nattachments = [];
 
     let issue = new Issue({
@@ -62,9 +62,9 @@ async function getMyIssues(req,res){
 }
 
 async function getIssue(req,res){
-    console.log(req.params.issueId);
+    
     const issue = await Issue.findOne({issueId : req.params.issueId}).select("-_id-__v");
-    console.log(issue);
+    
     if(isEmpty(issue)){
         return res.send(generateResponse(404,true,"No issue with provided is found",null));
     }else{
@@ -76,10 +76,12 @@ async function updateIssue(req,res){
     const user = await User.findOne({userId : req.body.assignedTo.userId}).select("-_id-__v");
     
     if(isEmpty(user)){
+        winLogger.error("User not Found");
         return res.send(generateResponse(404,true,"Assigneee not found",null));
     }
     let issue = await Issue.findOne({issueId : req.params.issueId}).select("-_id-__v");
     if(isEmpty(issue)){
+        winLogger.error("Issue not Found");
         return res.send(generateResponse(404,true,"Issue not found",null));
     }
     issue.description = req.body.description;
@@ -95,13 +97,14 @@ async function updateIssue(req,res){
             break;
         }
     }
-    console.log(alreadyPresent);
+    
     if(!alreadyPresent){
         issue.watchers.push(user);
     }
     
-    console.log(issue);
+    
     issue = await issue.save();
+    winLogger.info("Issue Updated Successfully");
     issue.toObject();
     return res.send(generateResponse(200,null,"Updated",issue));
 }
@@ -109,11 +112,11 @@ async function updateIssue(req,res){
 async function searchIssue(req,res){
     const issues = await Issue.find({ title : {$regex: req.params.title}}).select("-_id-__v");
 
-    console.log(issues);
-
     if(isEmpty(issues)){
+        winLogger.info("Issues Not Found");
         return res.send(generateResponse(404,true,"No Issues Found",null));
     }else{
+        winLogger.info("Issues Found");
         return res.send(generateResponse(200,null,"Issues Found",issues));
     }
 }
@@ -122,6 +125,7 @@ async function addWatcher(req,res){
     const user = await User.findOne({userId : req.body.userId}).select("userId name");
 
     if(isEmpty(user)){
+        winLogger.error("User not Found");
         return res.send(generateResponse(404,true,"User not Found",null));
     }else{
         let issue = await Issue.findOneAndUpdate({issueId : req.params.issueId},
@@ -129,6 +133,7 @@ async function addWatcher(req,res){
             {new : true}
             );
             issue.toObject();
+        winLogger.info("Watcher Added");
         return res.send(generateResponse(200,null,"Added Watcher",issue));
     }
 }
@@ -136,6 +141,7 @@ async function addWatcher(req,res){
 async function removeWatcher(req,res){
     const user = await User.findOne({userId : req.body.userId}).select("userId name"); 
     if(isEmpty(user)){
+        winLogger.error("User Not Found");
         return res.send(generateResponse(404,true,"User not found",req.body.userId));
     }
     let issue = await Issue.findOneAndUpdate({issueId : req.params.issueId},
@@ -144,6 +150,7 @@ async function removeWatcher(req,res){
         },
         {new: true}
         );
+    winLogger.info("WAtcher Removed");
     issue.toObject();
     return res.send(generateResponse(200,null,"Removed Watcher",issue));
 
