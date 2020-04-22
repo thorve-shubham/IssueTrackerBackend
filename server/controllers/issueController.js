@@ -29,8 +29,13 @@ async function reportIssue(req,res){
         description : req.body.description,
         title : req.body.title,
         attachments : nattachments,
-        watchers : [assign,report]
     });
+    if(assign.userId == report.userId){
+        issue.watchers.push(assign);
+    }else{
+        issue.watchers.push(assign);
+        issue.watchers.push(report);
+    }
 
     issue = await issue.save();
     winLogger.info("Issue Created : "+issue.issueId);
